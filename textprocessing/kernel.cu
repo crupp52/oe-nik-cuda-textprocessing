@@ -107,7 +107,7 @@ int main()
 	end = clock();
 	elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 
-	std::cout << "GPU result:" << elapsed_secs << std::endl;
+	std::cout << "GPU result: " << elapsed_secs << std::endl;
 	for (int i = 0; i < 26; i++)
 	{
 		std::cout << abcString[i] << ": " << h_result[i] << std::endl;
