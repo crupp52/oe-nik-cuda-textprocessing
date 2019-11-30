@@ -12,6 +12,8 @@
 //__device__ int d_result[26];
 //__device__ int d_content_length;
 
+int content_length;
+
 int main()
 {
 	std::string abcString = "abcdefghijklmnopqrstuvwxyz";
@@ -21,8 +23,7 @@ int main()
 	{
 		h_result[i] = 0;
 	}
-
-	unsigned int content_length;
+	
 	std::ifstream ifs("text.txt");
 	std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 	std::transform(content.begin(), content.end(), content.begin(), [](unsigned char c) { return std::tolower(c); });
@@ -54,6 +55,21 @@ int main()
 	return 0;
 }
 
-//__global__ int gpu_solution() {
-//	return 0;
-//}
+__device__ char d_content[8000000];
+__device__ char d_abc[26];
+__device__ int d_result[26];
+
+__global__ void gpu_solution() {
+	int i = threadIdx.x * blockIdx.x;
+
+	if ('a' <= d_content[i] && d_content[i] <= 'z')
+	{
+		for (int j = 0; j < 26; j++)
+		{
+			if (d_abc[j] == d_content[i])
+			{
+				d_result[j]++;
+			}
+		}
+	}
+}
