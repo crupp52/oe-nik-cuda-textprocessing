@@ -62,6 +62,9 @@ int main()
 	int h_result[M];
 	char h_abc[M];
 
+	float ms;
+	cudaEvent_t start, stop;
+
 	for (int i = 0; i < M; i++)
 	{
 		h_abc[i] = abcString[i];
@@ -90,6 +93,11 @@ int main()
 	clock_t begin = clock();
 
 	//CPU solution
+
+	cudaEventCreate(&start);
+	cudaEventCreate(&stop);
+	cudaEventRecord(start, 0);
+
 	for (int i = 0; i < content_length; i++)
 	{
 		if ('a' <= h_content[i] && h_content[i] <= 'z')
@@ -104,14 +112,22 @@ int main()
 		}
 	}
 
-	clock_t end = clock();
-	double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+	cudaThreadSynchronize();
+	cudaEventRecord(stop, 0);
+	cudaEventSynchronize(stop);
+	cudaEventElapsedTime(&ms, start, stop);
 
-	std::cout << "CPU result: " << elapsed_secs << std::endl;
-	for (int i = 0; i < 26; i++)
+	cudaEventDestroy(start);
+	cudaEventDestroy(stop);
+
+	clock_t end = clock();
+	double elapsed_secs = float(end - begin) / CLOCKS_PER_SEC;
+
+	std::cout << "CPU result: " << ms << std::endl;
+	/*for (int i = 0; i < 26; i++)
 	{
 		std::cout << abcString[i] << ": " << h_result[i] << std::endl;
-	}
+	}*/
 
 	//GPU single thread solution
 
@@ -133,7 +149,20 @@ int main()
 	}
 
 	begin = clock();
+
+	cudaEventCreate(&start);
+	cudaEventCreate(&stop);
+	cudaEventRecord(start, 0);
+
 	gpu_single_thread << <1, 1 >> > ();
+
+	cudaThreadSynchronize();
+	cudaEventRecord(stop, 0);
+	cudaEventSynchronize(stop);
+	cudaEventElapsedTime(&ms, start, stop);
+
+	cudaEventDestroy(start);
+	cudaEventDestroy(stop);
 	end = clock();
 
 	cudaMemcpyFromSymbol(h_content, d_content, sizeof(char) * N);
@@ -141,13 +170,13 @@ int main()
 	cudaMemcpyFromSymbol(h_result, d_result, sizeof(int) * M);
 
 	
-	elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+	elapsed_secs = float(end - begin) / CLOCKS_PER_SEC;
 
 	std::cout << "GPU single thread result: " << elapsed_secs << std::endl;
-	for (int i = 0; i < 26; i++)
+	/*for (int i = 0; i < 26; i++)
 	{
 		std::cout << abcString[i] << ": " << h_result[i] << std::endl;
-	}
+	}*/
 
 	//GPU solution
 
@@ -169,7 +198,20 @@ int main()
 	}
 
 	begin = clock();
+
+	cudaEventCreate(&start);
+	cudaEventCreate(&stop);
+	cudaEventRecord(start, 0);
+
 	gpu_solution <<<block_size, 512 >>> ();
+
+	cudaThreadSynchronize();
+	cudaEventRecord(stop, 0);
+	cudaEventSynchronize(stop);
+	cudaEventElapsedTime(&ms, start, stop);
+
+	cudaEventDestroy(start);
+	cudaEventDestroy(stop);
 	end = clock();
 
 	cudaMemcpyFromSymbol(h_content, d_content, sizeof(char) * N);
@@ -177,13 +219,13 @@ int main()
 	cudaMemcpyFromSymbol(h_result, d_result, sizeof(int) * M);
 	cudaDeviceSynchronize();
 	
-	elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+	elapsed_secs = float(end - begin) / CLOCKS_PER_SEC;
 
 	std::cout << "GPU result: " << elapsed_secs << std::endl;
-	for (int i = 0; i < 26; i++)
+	/*for (int i = 0; i < 26; i++)
 	{
 		std::cout << abcString[i] << ": " << h_result[i] << std::endl;
-	}
+	}*/
 
 	cudaFree((void*)d_content[0]);
 	std::cin.ignore();
